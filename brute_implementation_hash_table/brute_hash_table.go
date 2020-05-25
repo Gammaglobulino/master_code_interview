@@ -5,32 +5,42 @@ import (
 	"encoding/gob"
 )
 
-type keyValuePair struct {
-	key   string
-	value int
+type KeyValuePair struct {
+	Key   string
+	Value int
 }
 
 type HashTable struct {
-	buckets  [][]keyValuePair
-	size     int
-	capacity int
+	Buckets  [][]KeyValuePair
+	Size     int
+	Capacity int
 }
 
-func (ht *HashTable) DeepCopy() *HashTable {
+func (ht *HashTable) DeepCopy() HashTable {
 	copiedBuffer := &bytes.Buffer{}
 	newEncoder := gob.NewEncoder(copiedBuffer)
-	newEncoder.Encode(ht)
-	copiedHashTable := NewHasTable(ht.capacity * 2)
+	err := newEncoder.Encode(ht)
+	if err != nil {
+		panic(err)
+	}
+	copiedHashTable := NewHasTable(ht.Capacity)
 	newDecoder := gob.NewDecoder(copiedBuffer)
-	_ = newDecoder.Decode(copiedHashTable)
+	err = newDecoder.Decode(&copiedHashTable)
+	if err != nil {
+		panic(err)
+	}
 	return copiedHashTable
 }
 
-func NewHasTable(size int) *HashTable {
-	return &HashTable{make([][]keyValuePair, size), 0, size}
+func NewHasTable(size int) HashTable {
+	ht := HashTable{make([][]KeyValuePair, size), 0, size}
+	for i := 0; i < len(ht.Buckets); i++ {
+		ht.Buckets[i] = append(ht.Buckets[i], KeyValuePair{})
+	}
+	return ht
 }
 
-func (ht *HashTable) Hash(key string) uint32 {
+func (ht *HashTable) Hash(key string) uint32 { //
 	var h uint32
 	for _, c := range key {
 		h += uint32(c)
@@ -44,40 +54,41 @@ func (ht *HashTable) Hash(key string) uint32 {
 }
 
 func (ht *HashTable) getIndex(key string) int {
-	return int(ht.Hash(key)) % ht.capacity
+	return int(ht.Hash(key)) % ht.Capacity
 }
 
-func (ht *HashTable) Size() int {
-	return ht.size
-}
 func (ht *HashTable) Cap() int {
-	return ht.capacity
+	return ht.Capacity
 }
 
-func (ht *HashTable) growMe() {
-	newGrownTable := ht.DeepCopy()
-	ht = newGrownTable
+func (ht *HashTable) GrowMe() {
+	extendedBackets := make([][]KeyValuePair, ht.Capacity)
+	for i := ht.Capacity + 1; i < len(extendedBackets); i++ {
+		extendedBackets[i] = append(extendedBackets[i], KeyValuePair{"", 0})
+	}
+	ht.Buckets = append(ht.Buckets, extendedBackets...)
+	ht.Capacity = ht.Capacity * 2
 }
 
 func (ht *HashTable) Insert(key string, value int) bool {
 	index := ht.getIndex(key)
-	chain := ht.buckets[index]
+	chain := ht.Buckets[index]
 	for i, kv := range chain {
-		if kv.key == key {
+		if kv.Key == key {
 			node := &chain[i]
-			node.value = value
+			node.Value = value
 			return false
 		}
 	}
-	if ht.size == ht.capacity {
-		ht.growMe()
+	if ht.Size == ht.Capacity {
+		ht.GrowMe()
 	}
-	node := keyValuePair{
-		key:   key,
-		value: value,
+	node := KeyValuePair{
+		Key:   key,
+		Value: value,
 	}
 	chain = append(chain, node)
-	ht.buckets[index] = chain
-	ht.size++
+	ht.Buckets[index] = chain
+	ht.Size++
 	return true
 }
