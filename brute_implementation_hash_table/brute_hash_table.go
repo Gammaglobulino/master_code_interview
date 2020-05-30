@@ -34,6 +34,8 @@ func (ht *HashTable) DeepCopy() HashTable {
 
 func NewHasTable(size int) HashTable {
 	ht := HashTable{make([][]KeyValuePair, size), 0, size}
+
+	//fill the table with empty values (needed for GOB serialization)
 	for i := 0; i < len(ht.Buckets); i++ {
 		ht.Buckets[i] = append(ht.Buckets[i], KeyValuePair{})
 	}
