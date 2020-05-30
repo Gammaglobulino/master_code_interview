@@ -7,8 +7,8 @@ Stacks
 Queues
 Graphs.
 
-The reason is that you can implement that by urself using:
-Tree, LinkedList and Array, provided.
+The reason is that you can implement them by urself using:
+Tree, LinkedList and Array, provided by me.
 
 Decided to stretch myself and get to implement my own Hash Table and code all the most famous sorting algo around.
 
